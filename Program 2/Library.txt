@@ -1,0 +1,102 @@
+bmsce@bmsce-not-so-precised-animo-succker:~$ cqlsh
+Connected to Test Cluster at 127.0.0.1:9042.
+[cqlsh 5.0.1 | Cassandra 3.11.4 | CQL spec 3.4.4 | Native protocol v4]
+Use HELP for help.
+cqlsh> use library;
+cqlsh:library> create table library_info(
+           ... stud_id int,
+           ... counter_val counter,
+           ... stud_name text,
+           ... book_name text,
+           ... book_id int,
+           ... doi date,
+           ... primary key(stud_id, stud_name, book_name, book_id, doi));
+cqlsh:library> begin counter batch
+           ... update library_info set counter_value += 1 where stud_id = 111 and stud_name = 'Ankit' and book_name = 'ML and book_id = 1 and doi = '2022-05-01';
+           ... 
+cqlsh:library> select * from library_info;
+
+ stud_id | stud_name | book_name | book_id | doi | counter_val
+---------+-----------+-----------+---------+-----+-------------
+
+(0 rows)
+cqlsh:library> begin counter batch
+           ... update library_info set counter_value += 1 where stud_id = 111 and stud_name = 'Ankit' and book_name = 'ML and book_id = 1 and doi = '2022-05-01';
+           ... update library_info set counter_value += 1 where stud_id = 112 and stud_name = 'Ajay' and book_name = 'ML and book_id = 1 and doi = '2022-05-01';
+cqlsh:library> begin counter batch
+           ... update library_info set counter_value += 1 where stud_id = 111 and stud_name = 'Ankit' and book_name = 'ML' and book_id = 1 and doi = '2022-05-01';
+           ... update library_info set counter_value += 1 where stud_id = 112 and stud_name = 'Ajay' and book_name = 'BDA' and book_id = 2 and doi = '2022-04-11';
+           ... update library_info set counter_value += 1 where stud_id = 113 and stud_name = 'Joe' and book_name = 'CNS' and book_id = 3 and doi = '2022-04-18';
+           ... apply batch;
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Undefined column name counter_value"
+cqlsh:library> begin counter batch update library_info set counter_val += 1 where stud_id = 111 and stud_name = 'Ankit' and book_name = 'ML' and book_id = 1 and doi = '2022-05-01'; update library_info set counter_val += 1 where stud_id = 112 and stud_name = 'Ajay' and book_name = 'BDA' and book_id = 2 and doi = '2022-04-11'; update library_info set counter_val += 1 where stud_id = 113 and stud_name = 'Joe' and book_name = 'CNS' and book_id = 3 and doi = '2022-04-18'; apply batch;
+cqlsh:library> select * from library_info;
+
+ stud_id | stud_name | book_name | book_id | doi        | counter_val
+---------+-----------+-----------+---------+------------+-------------
+     111 |     Ankit |        ML |       1 | 2022-05-01 |           1
+     113 |       Joe |       CNS |       3 | 2022-04-18 |           1
+     112 |      Ajay |       BDA |       2 | 2022-04-11 |           1
+
+(3 rows)
+cqlsh:library> update library_info set counter_val+=1 where stud_id = 112 and stud_name = 'Ajay' and book_name = 'BDA' and book_id = 112 and doi = '2022-04-11'
+           ... ;
+cqlsh:library> select * from library_info;
+
+ stud_id | stud_name | book_name | book_id | doi        | counter_val
+---------+-----------+-----------+---------+------------+-------------
+     111 |     Ankit |        ML |       1 | 2022-05-01 |           1
+     113 |       Joe |       CNS |       3 | 2022-04-18 |           1
+     112 |      Ajay |       BDA |       2 | 2022-04-11 |           1
+     112 |      Ajay |       BDA |     112 | 2022-04-11 |           1
+
+(4 rows)
+cqlsh:library> delete from library_info where book_id = 112;
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Some partition key parts are missing: stud_id"
+cqlsh:library> truncate library_info;
+cqlsh:library> begin counter batch update library_info set counter_val += 1 where stud_id = 111 and stud_name = 'Ankit' and book_name = 'ML' and book_id = 1 and doi = '2022-05-01'; update library_info set counter_val += 1 where stud_id = 112 and stud_name = 'Ajay' and book_name = 'BDA' and book_id = 2 and doi = '2022-04-11'; update library_info set counter_val += 1 where stud_id = 113 and stud_name = 'Joe' and book_name = 'CNS' and book_id = 3 and doi = '2022-04-18'; apply batch;
+cqlsh:library> select * from library_info;
+
+ stud_id | stud_name | book_name | book_id | doi        | counter_val
+---------+-----------+-----------+---------+------------+-------------
+     111 |     Ankit |        ML |       1 | 2022-05-01 |           1
+     113 |       Joe |       CNS |       3 | 2022-04-18 |           1
+     112 |      Ajay |       BDA |       2 | 2022-04-11 |           1
+
+(3 rows)
+cqlsh:library> update library_info set counter_val+=1 where stud_id = 112 and stud_name = 'Ajay' and book_name = 'BDA' and book_id = 2 and doi = '2022-04-11' ;
+cqlsh:library> select * from library_info;
+
+ stud_id | stud_name | book_name | book_id | doi        | counter_val
+---------+-----------+-----------+---------+------------+-------------
+     111 |     Ankit |        ML |       1 | 2022-05-01 |           1
+     113 |       Joe |       CNS |       3 | 2022-04-18 |           1
+     112 |      Ajay |       BDA |       2 | 2022-04-11 |           2
+
+(3 rows)
+cqlsh:library> copy library_info(stud_id, stud_name, book_name, book_id, doi, counter_val) to '/home/bmsce/Documents/1BM19CS186/BDA Lab' with header = true and delimiter=',';
+Using 11 child processes
+Can't open '/home/bmsce/Documents/1BM19CS186/BDA Lab' for writing: [Errno 21] Is a directory: '/home/bmsce/Documents/1BM19CS186/BDA Lab'
+cqlsh:library> copy library_info(stud_id, stud_name, book_name, book_id, doi, counter_val) to '/home/bmsce/Documents/1BM19CS186/BDA Lab/library_info.csv' with header = true and delimiter=',';
+Using 11 child processes
+
+Starting copy of library.library_info with columns [stud_id, stud_name, book_name, book_id, doi, counter_val].
+Processed: 3 rows; Rate:      19 rows/s; Avg. rate:      19 rows/s
+3 rows exported to 1 files in 0.181 seconds.
+cqlsh:library> truncate library_info;
+cqlsh:library> copy library_info(stud_id, stud_name, book_name, book_id, doi, counter_val) from '/home/bmsce/Documents/1BM19CS186/BDA Lab/library_info.csv' with header = true and delimiter=',';
+Using 11 child processes
+
+Starting copy of library.library_info with columns [stud_id, stud_name, book_name, book_id, doi, counter_val].
+Processed: 3 rows; Rate:       5 rows/s; Avg. rate:       7 rows/s
+3 rows imported from 1 files in 0.421 seconds (0 skipped).
+cqlsh:library> select * from library_info
+           ... ;
+
+ stud_id | stud_name | book_name | book_id | doi        | counter_val
+---------+-----------+-----------+---------+------------+-------------
+     111 |     Ankit |        ML |       1 | 2022-05-01 |           1
+     113 |       Joe |       CNS |       3 | 2022-04-18 |           1
+     112 |      Ajay |       BDA |       2 | 2022-04-11 |           2
+
+(3 rows)

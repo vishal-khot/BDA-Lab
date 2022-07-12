@@ -1,0 +1,101 @@
+cqlsh:employee> create table employee_info(
+            ... emp_id int,
+            ... emp_name text,
+            ... designation text,
+            ... doj date,
+            ... salary int,
+            ... dept_name text,
+            ... primary key(emp_id, salary));
+cqlsh:employee> begin batch insert into employee_info(emp_id, emp_name, designation, doj, salary, dept_name) values (121, 'Joseph', 'Engineer 1', '2020-5-30', 1000000, 'R&D'); insert into employee_info(emp_id, emp_name, designation, doj, salary, dept_name) values (122, 'Stalin', 'Senior Engineer', '2021-2-10', 2000000, 'Operations'); insert into employee_info(emp_id, emp_name, designation, doj, salary, dept_name) values (123, 'John', 'Product Manager', '2020-2-20', 2000000, 'R&D'); insert into employee_info(emp_id, emp_name, designation, doj, salary, dept_name) values (124, 'Steve', 'CEO', '2017-1-13', 6500000, 'Business'); insert into employee_info(emp_id, emp_name, designation, doj, salary, dept_name) values (125, 'Tim', 'Direcor', '2017-6-12', 5500000, 'Business'); apply batch;
+cqlsh:employee> select * from employee_info;
+
+ emp_id | salary  | dept_name  | designation     | doj        | emp_name
+--------+---------+------------+-----------------+------------+----------
+    123 | 2000000 |        R&D | Product Manager | 2020-02-20 |     John
+    125 | 5500000 |   Business |         Direcor | 2017-06-12 |      Tim
+    122 | 2000000 | Operations | Senior Engineer | 2021-02-10 |   Stalin
+    121 | 1000000 |        R&D |      Engineer 1 | 2020-05-30 |   Joseph
+    124 | 6500000 |   Business |             CEO | 2017-01-13 |    Steve
+
+(5 rows)
+cqlsh:employee> update employee_info set emp_name = 'Tom', dept_name = 'Development' where emp_id = 121 and salary = 1000000;
+cqlsh:employee> select * from employee_info;
+
+ emp_id | salary  | dept_name   | designation     | doj        | emp_name
+--------+---------+-------------+-----------------+------------+----------
+    123 | 2000000 |         R&D | Product Manager | 2020-02-20 |     John
+    125 | 5500000 |    Business |         Direcor | 2017-06-12 |      Tim
+    122 | 2000000 |  Operations | Senior Engineer | 2021-02-10 |   Stalin
+    121 | 1000000 | Development |      Engineer 1 | 2020-05-30 |      Tom
+    124 | 6500000 |    Business |             CEO | 2017-01-13 |    Steve
+
+(5 rows)
+cqlsh:employee> paging off
+Disabled Query paging.
+cqlsh:employee> select * from employee_info where emp_id in (121, 122, 123, 124, 125) order by salary;
+
+ emp_id | salary  | dept_name   | designation     | doj        | emp_name
+--------+---------+-------------+-----------------+------------+----------
+    121 | 1000000 | Development |      Engineer 1 | 2020-05-30 |      Tom
+    122 | 2000000 |  Operations | Senior Engineer | 2021-02-10 |   Stalin
+    123 | 2000000 |         R&D | Product Manager | 2020-02-20 |     John
+    125 | 5500000 |    Business |         Direcor | 2017-06-12 |      Tim
+    124 | 6500000 |    Business |             CEO | 2017-01-13 |    Steve
+
+(5 rows)
+cqlsh:employee> alter table employee_info add projects set<text>;
+cqlsh:employee> update table employee_info set projects = {'ML', 'DL'} where emp_id = 121 and salary = 1000000;
+SyntaxException: line 1:7 no viable alternative at input 'table' (update [table]...)
+cqlsh:employee> update employee_info set projects = {'ML', 'DL'} where emp_id = 121 and salary = 1000000;
+cqlsh:employee> select * from employee_info;
+
+ emp_id | salary  | dept_name   | designation     | doj        | emp_name | projects
+--------+---------+-------------+-----------------+------------+----------+--------------
+    123 | 2000000 |         R&D | Product Manager | 2020-02-20 |     John |         null
+    125 | 5500000 |    Business |         Direcor | 2017-06-12 |      Tim |         null
+    122 | 2000000 |  Operations | Senior Engineer | 2021-02-10 |   Stalin |         null
+    121 | 1000000 | Development |      Engineer 1 | 2020-05-30 |      Tom | {'DL', 'ML'}
+    124 | 6500000 |    Business |             CEO | 2017-01-13 |    Steve |         null
+
+(5 rows)
+cqlsh:employee> update employee_info set projects = {'Cloud Computing'} where emp_id = 122 and salary = 2000000;
+cqlsh:employee> update employee_info set projects = {'Blockchain', 'AWS'} where emp_id = 123 and salary = 2000000;
+cqlsh:employee> update employee_info set projects = {'ML', 'AWS'} where emp_id = 124 and salary = 6500000;
+cqlsh:employee> update employee_info set projects = {} where emp_id = 124 and salary = 6500000;
+cqlsh:employee> update employee_info set projects = {'AWS'} where emp_id = 125 and salary = 5500000;
+cqlsh:employee> select * from employee_info;
+
+ emp_id | salary  | dept_name   | designation     | doj        | emp_name | projects
+--------+---------+-------------+-----------------+------------+----------+-----------------------
+    123 | 2000000 |         R&D | Product Manager | 2020-02-20 |     John | {'AWS', 'Blockchain'}
+    125 | 5500000 |    Business |         Direcor | 2017-06-12 |      Tim |               {'AWS'}
+    122 | 2000000 |  Operations | Senior Engineer | 2021-02-10 |   Stalin |   {'Cloud Computing'}
+    121 | 1000000 | Development |      Engineer 1 | 2020-05-30 |      Tom |          {'DL', 'ML'}
+    124 | 6500000 |    Business |             CEO | 2017-01-13 |    Steve |                  null
+
+(5 rows)
+cqlsh:employee> insert into employee_info(emp_id, emp_name, designation, doj, salary, dept_name) values (126, 'Joseph', 'Director', '2017-6-12', 4500000, 'Business') using ttl 15;
+cqlsh:employee> select * from employee_info;
+
+ emp_id | salary  | dept_name   | designation     | doj        | emp_name | projects
+--------+---------+-------------+-----------------+------------+----------+-----------------------
+    123 | 2000000 |         R&D | Product Manager | 2020-02-20 |     John | {'AWS', 'Blockchain'}
+    125 | 5500000 |    Business |         Direcor | 2017-06-12 |      Tim |               {'AWS'}
+    122 | 2000000 |  Operations | Senior Engineer | 2021-02-10 |   Stalin |   {'Cloud Computing'}
+    121 | 1000000 | Development |      Engineer 1 | 2020-05-30 |      Tom |          {'DL', 'ML'}
+    126 | 4500000 |    Business |        Director | 2017-06-12 |   Joseph |                  null
+    124 | 6500000 |    Business |             CEO | 2017-01-13 |    Steve |                  null
+
+(6 rows)
+cqlsh:employee> select * from employee_info;
+
+ emp_id | salary  | dept_name   | designation     | doj        | emp_name | projects
+--------+---------+-------------+-----------------+------------+----------+-----------------------
+    123 | 2000000 |         R&D | Product Manager | 2020-02-20 |     John | {'AWS', 'Blockchain'}
+    125 | 5500000 |    Business |         Direcor | 2017-06-12 |      Tim |               {'AWS'}
+    122 | 2000000 |  Operations | Senior Engineer | 2021-02-10 |   Stalin |   {'Cloud Computing'}
+    121 | 1000000 | Development |      Engineer 1 | 2020-05-30 |      Tom |          {'DL', 'ML'}
+    124 | 6500000 |    Business |             CEO | 2017-01-13 |    Steve |                  null
+
+(5 rows)
+cqlsh:employee> 
